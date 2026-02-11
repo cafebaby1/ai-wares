@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>中国传统色 · 东方色谱</title>
+  <!-- Tailwind via CDN + 基础层 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 谷歌衬线字体 · 宋韵 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- 少量自定义：纸纹质感、文字阴影、精致过渡 -->
+  <style>
+    /* 仿古宣纸肌理 + 温和暖底 */
+    body {
+      font-family: 'Noto Serif SC', 'Times New Roman', '宋体', 'Songti SC', serif;
+      background-color: #fcf7f0;  /* 老宣纸色 */
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(200, 180, 150, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 90% 70%, rgba(160, 130, 100, 0.04) 1px, transparent 1px);
+      background-size: 30px 30px, 50px 50px;
+    }
+    /* 优雅文字阴影 —— 用于深底白字，提升可读性 */
+    .text-shadow {
+      text-shadow: 0 2px 6px rgba(20, 20, 20, 0.3), 0 1px 2px rgba(0,0,0,0.2);
+    }
+    /* 卡片的微妙浮动感 */
+    .color-card {
+      transition: transform 0.25s ease, box-shadow 0.4s ease;
+      will-change: transform;
+      backdrop-filter: blur(2px);
+    }
+    .color-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 28px -10px rgba(60, 40, 20, 0.18), 0 8px 10px -6px rgba(0,0,0,0.1);
+    }
+    /* 印章式点缀·小雅 */
+    .seal {
+      border: 1px solid #b78c5a;
+      color: #8b5a2b;
+      padding: 0.1rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+    }
+    /* 复制提示淡入淡出 */
+    .toast-enter {
+      animation: fadeInUp 0.25s forwards;
+    }
+    .toast-leave {
+      animation: fadeOutDown 0.25s forwards;
+    }
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translate(-50%, 20px); }
+      100% { opacity: 1; transform: translate(-50%, 0); }
+    }
+    @keyframes fadeOutDown {
+      0% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, 20px); }
+    }
+  </style>
+</head>
+<body class="antialiased text-[#3e2e23]">
+
+  <!-- 全局复制反馈Toast - 极简浮签 -->
+  <div id="copyToast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-[#2d2a24] text-[#f2e6da] px-6 py-3 rounded-full shadow-2xl text-sm flex items-center gap-2 border border-[#b7a088] hidden pointer-events-none backdrop-blur-sm bg-opacity-90">
+    <span class="text-lg">🖌️</span>
+    <span id="toastMessage">已复制 朱砂 #E34234</span>
+  </div>
+
+  <!-- 主容器 · 传统呼吸感 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+
+    <!-- ======= 题头 · 东方五色观 ======= -->
+    <div class="text-center mb-12 relative">
+      <!-- 水印印章装饰 -->
+      <div class="absolute left-0 top-0 hidden sm:block seal transform -rotate-6">五色</div>
+      <div class="absolute right-0 top-0 hidden sm:block seal transform rotate-3">观象</div>
+      
+      <h1 class="text-5xl md:text-6xl font-semibold tracking-wider text-[#5e3e2b] drop-shadow-sm">
+        中国传统色
+      </h1>
+      <div class="flex justify-center items-center gap-2 mt-3 text-[#876b51]">
+        <span class="w-12 h-0.5 bg-[#c9ad7a]"></span>
+        <span class="text-lg font-light italic">青·赤·黄·白·黑</span>
+        <span class="w-12 h-0.5 bg-[#c9ad7a]"></span>
+      </div>
+      <p class="text-[#6b4f3a] max-w-2xl mx-auto mt-5 text-base md:text-lg leading-relaxed font-light tracking-wide">
+        天有时，地有气，材有美，工有巧。     ——   《考工记》<br>
+        东方色彩，出自山川万物，今呈十二色谱，点击即藏。
+      </p>
+      <!-- 轻量引导 · 点击复制 -->
+      <div class="mt-6 flex justify-center items-center gap-3 text-sm text-[#8b6f50]">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#b34141]"></span> 朱砂</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#42566b]"></span> 黛蓝</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#a1b88c]"></span> 豆绿</span>
+        <span class="bg-[#e4dacb] px-3 py-1 rounded-full text-[#4d3e32] ml-2 shadow-sm">✨ 点击色卡复制色号</span>
+      </div>
+    </div>
+
+    <!-- ======= 传统十二色谱 · 动态渲染 ======= -->
+    <section>
+      <h2 class="sr-only">中国传统十二色</h2>
+      <!-- 网格容器：JS将在此填充色彩卡片 -->
+      <div id="colorGrid" class="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-7 lg:gap-8 auto-rows-fr">
+        <!-- JS 会完全替换此区域，预留静态度量，以防脚本延迟显示骨架 -->
+        <div class="col-span-full text-center py-20 text-[#9b8571] animate-pulse">
+          <span class="inline-block w-10 h-10 border-4 border-[#c6a992] border-t-transparent rounded-full animate-spin"></span>
+          <p class="mt-4">展开色谱 · 东方意蕴</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======= 文人落款 · 格物致知 ======= -->
+    <footer class="mt-20 pt-10 border-t border-[#dac9b8] text-[#5f4e3c] text-sm text-center font-light">
+      <div class="flex flex-col items-center gap-3">
+        <span class="text-3xl leading-none text-[#b4835a]">⚘</span>
+        <p class="tracking-[.2em]">出自· 东方色谱</p>
+        <p class="max-w-lg mx-auto text-xs text-[#7e6b5a]">
+          朱砂、黛蓝、秋香、月白…… 千色凝于方寸，俯拾皆是文章。<br>
+          十二色取自传统染织、矿物与写意，点击即复制色值，可随身藏。
+        </p>
+        <p class="text-[#a48c78] text-xs mt-2">⿻ 仿古宣纸纹 · 致敬 timeless 东方审美</p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ---------- 中国传统色彩 · 十二正色 (色名/色值/典雅注脚) ----------
+      const COLOR_LIBRARY = [
+        { name: "朱砂", hex: "#E34234", desc: "银朱·赤丹" },
+        { name: "胭脂", hex: "#B34141", desc: "红蓝花·燕支" },
+        { name: "黛蓝", hex: "#42566B", desc: "青黛·远山" },
+        { name: "月白", hex: "#E1E9F0", desc: "月下·素色" },
+        { name: "秋香", hex: "#D3B176", desc: "秋意·桂子" },
+        { name: "艾绿", hex: "#B2C2AC", desc: "艾蒿·青青" },
+        { name: "藕荷", hex: "#C7A69E", desc: "淡藕·荷茎" },
+        { name: "豆绿", hex: "#A1B892", desc: "青豆·春生" },
+        { name: "绯红", hex: "#C83F49", desc: "浅绛·桃夭" },
+        { name: "琉璃黄", hex: "#D4A32E", desc: "琉璃·金瓦" },
+        { name: "石青", hex: "#4A6A7C", desc: "蓝铜·深邃" },
+        { name: "竹青", hex: "#6B8E5D", desc: "翠筠·劲节" }
+      ];
+
+      // ---------- 辅助函数： hex → RGB ----------
+      function hexToRgb(hex) {
+        let r = 0, g = 0, b = 0;
+        // 去除 # 号
+        hex = hex.replace('#', '');
+        if (hex.length === 3) {
+          r = parseInt(hex[0] + hex[0], 16);
+          g = parseInt(hex[1] + hex[1], 16);
+          b = parseInt(hex[2] + hex[2], 16);
+        } else if (hex.length === 6) {
+          r = parseInt(hex.slice(0, 2), 16);
+          g = parseInt(hex.slice(2, 4), 16);
+          b = parseInt(hex.slice(4, 6), 16);
+        }
+        return { r, g, b };
+      }
+
+      // 根据背景亮度判断文字颜色 —— 深底用白字+阴影，浅底用深灰
+      function getTextColorClass(hexColor) {
+        const { r, g, b } = hexToRgb(hexColor);
+        // 相对亮度公式 (感知亮度 Y = 0.299*R + 0.587*G + 0.114*B)
+        const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+        // 阈值180，亮背景则使用深色文字，深背景使用白字
+        if (brightness > 180) {
+          return 'text-gray-800'; // 深灰色，清晰可辨
+        } else {
+          return 'text-white text-shadow'; // 白色 + 清晰阴影
+        }
+      }
+
+      // ---------- 渲染色彩卡片至网格 ----------
+      const container = document.getElementById('colorGrid');
+      if (!container) return;
+
+      // 清空骨架/占位内容
+      container.innerHTML = '';
+
+      // 循环构建每一个色卡
+      COLOR_LIBRARY.forEach((color) => {
+        const card = document.createElement('div');
+        // 基础卡片类：圆角、内边距、弹性布局、阴影、指针
+        card.className = `color-card relative rounded-2xl shadow-lg p-6 flex flex-col justify-end items-start cursor-pointer transition-all duration-300 h-64 sm:h-72`;
+        // 设置背景色（内联style优先）
+        card.style.backgroundColor = color.hex;
+        // 携带数据集：色名、色值、描述（用于复制）
+        card.dataset.name = color.name;
+        card.dataset.hex = color.hex;
+        card.dataset.desc = color.desc || '';
+
+        // 根据背景亮度确定文字颜色类
+        const textColorClass = getTextColorClass(color.hex);
+
+        // 卡片内部HTML —— 色名 + 色值 + 细腻描述
+        card.innerHTML = `
+          <div class="absolute top-4 right-4 w-6 h-6 rounded-full border-2 border-white/30 bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <span class="text-white/80 text-xs">🎨</span>
+          </div>
+          <div class="${textColorClass} w-full">
+            <div class="flex items-baseline justify-between w-full">
+              <span class="text-2xl md:text-3xl font-semibold tracking-wider drop-shadow">${color.name}</span>
+              <span class="text-sm opacity-90 font-mono tracking-wider bg-black/10 px-2 py-0.5 rounded-full backdrop-blur-sm">${color.hex}</span>
+            </div>
+            <span class="text-sm opacity-85 mt-1.5 block font-light tracking-wide italic">${color.desc || '· 传统色 ·'}</span>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // ---------- 复制功能 (事件委托 · 点击卡片) ----------
+      const toastElement = document.getElementById('copyToast');
+      const toastMsg = document.getElementById('toastMessage');
+
+      function showToast(text, success = true) {
+        if (!toastElement || !toastMsg) return;
+        // 更新文字
+        toastMsg.innerText = `🖋️ 已复制  ${text}`;
+        // 移除隐藏及现有动画类
+        toastElement.classList.remove('hidden', 'toast-leave');
+        // 添加进入动画
+        toastElement.classList.add('toast-enter');
+        toastElement.classList.remove('hidden');
+        // 如果已有定时器，清除后重新设置
+        if (window.toastTimer) clearTimeout(window.toastTimer);
+        // 3秒后消失
+        window.toastTimer = setTimeout(() => {
+          toastElement.classList.remove('toast-enter');
+          toastElement.classList.add('toast-leave');
+          // 动画结束后彻底隐藏
+          setTimeout(() => {
+            toastElement.classList.add('hidden');
+            toastElement.classList.remove('toast-leave');
+          }, 250);
+        }, 2800);
+      }
+
+      // 监听整个网格容器的点击（事件委托——即使未来新加卡片也有效）
+      container.addEventListener('click', async function(e) {
+        // 通过closest获取实际点击的卡片元素
+        const card = e.target.closest('.color-card');
+        if (!card) return;
+
+        // 读取数据集
+        const name = card.dataset.name || '中国传统色';
+        const hex = card.dataset.hex || '#8B5A2B';
+        const copyContent = `${name} ${hex}`;  // 例如 "朱砂 #E34234"
+
+        // 尝试写入剪贴板
+        try {
+          await navigator.clipboard.writeText(copyContent);
+          showToast(`${name}  ${hex}`);
+        } catch (err) {
+          // 降级处理（兼容老浏览器）
+          alert(`📋 色号：${copyContent} （可手动复制）`);
+        }
+      });
+
+      // ---------- 优雅降级：卡片内可能有点击内部span，依然可触发 ---------- 
+      // 已经通过closest完美支持。
+    })();
+  </script>
+
+  <!-- 极少数浏览器不支持clipboard时的后备提示 -->
+  <noscript>
+    <div class="fixed bottom-6 left-6 bg-[#5e3e2b] text-white px-5 py-3 rounded-lg shadow-xl">
+      您的浏览器未启用JavaScript，但仍可欣赏传统色谱。
+    </div>
+  </noscript>
+
+  <!-- 附加装饰：手工感波浪分隔（纯粹气氛） -->
+  <div class="max-w-7xl mx-auto px-4 mt-4 hidden md:block">
+    <div class="h-6 text-[#cfb9a4] text-center text-xs tracking-[.5rem]">⸻  ⼇  ⸻</div>
+  </div>
+</body>
+</html>
