@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>国色 · 中国传统色谱</title>
+  <!-- Tailwind CSS · 轻量实用框架 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 微量自定义：衬线增强东方韵味，滚动平滑 -->
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Serif SC', '宋体', serif;
+    }
+    /* 水墨晕染点缀（极简） */
+    .ink-stain::after {
+      content: "⚘";
+      font-size: 2rem;
+      color: rgba(180, 110, 80, 0.1);
+      position: absolute;
+      bottom: 0;
+      right: 1rem;
+      transform: rotate(15deg);
+      pointer-events: none;
+    }
+    /* 卡片点击涟漪效果（柔和） */
+    .color-card:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body class="bg-amber-50/80 antialiased text-gray-800 selection:bg-amber-200/70 selection:text-gray-900">
+
+  <!-- 固定 · 优雅轻提示 (Toast) 初始隐藏 -->
+  <div id="copyToast" class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-stone-800/90 backdrop-blur-sm text-white/90 px-5 py-3 rounded-full shadow-xl transition-all duration-300 ease-out opacity-0 translate-y-2 pointer-events-none">
+    <span class="text-lg leading-none">✨</span>
+    <span id="toastMessage" class="text-sm font-medium tracking-wide">已复制颜色</span>
+  </div>
+
+  <!-- 主容器 · 东方留白 -->
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+
+    <!-- 页眉 · 传统意蕴 -->
+    <div class="text-center mb-12 md:mb-16 relative">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider text-stone-800 drop-shadow-sm">
+        <span class="bg-clip-text text-transparent bg-gradient-to-r from-amber-800 to-rose-800/90">中国传统配色</span>
+      </h1>
+      <div class="flex justify-center mt-3 mb-4">
+        <div class="w-20 h-1 bg-amber-300/70 rounded-full"></div>
+      </div>
+      <p class="text-lg md:text-xl text-stone-600/90 max-w-2xl mx-auto font-light leading-relaxed">
+        五正色 · 间色 · 千年传承 <br class="hidden sm:block"> 
+        <span class="text-amber-700/80 text-base md:text-lg">“随类赋彩，韵自天成”</span>
+      </p>
+    </div>
+
+    <!-- 色卡网格 · 动态渲染区 -->
+    <div id="colorGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5 lg:gap-6 auto-rows-fr"></div>
+
+    <!-- 脚注 · 东方哲思 -->
+    <footer class="mt-16 pt-8 border-t border-amber-200/60 text-center text-stone-500 text-sm md:text-base">
+      <p class="flex justify-center items-center gap-2 flex-wrap">
+        <span class="tracking-wider">🎋 中国传统色谱 · 廿四色</span>
+        <span class="hidden md:inline text-amber-300/70">|</span>
+        <span>取法自然 · 器以载道</span>
+      </p>
+      <p class="mt-3 text-xs text-stone-400/80 font-light tracking-wider">
+        点击任意色卡 · 复制色值 —— 珍藏东方记忆
+      </p>
+    </footer>
+
+    <!-- 极简印章装饰（纯氛围） -->
+    <div class="absolute left-2 bottom-2 text-6xl text-amber-200/20 select-none hidden lg:block pointer-events-none" style="transform: rotate(-10deg);">⚘</div>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------- 中国传统色 · 经典廿色 ----------
+      const CHINESE_COLORS = [
+        { name: "朱砂", hex: "#E0342E" },
+        { name: "胭脂", hex: "#B4493F" },
+        { name: "黛蓝", hex: "#426377" },
+        { name: "柳绿", hex: "#5D9E6B" },
+        { name: "鹅黄", hex: "#FECB8E" },
+        { name: "月白", hex: "#C2E0E0" },
+        { name: "秋香", hex: "#C28A4B" },
+        { name: "藕荷", hex: "#C79C8E" },
+        { name: "竹青", hex: "#37835E" },
+        { name: "艾绿", hex: "#C3DBC5" },
+        { name: "檀棕", hex: "#8C5E4C" },
+        { name: "琉璃", hex: "#1B6C8C" },
+        { name: "品红", hex: "#E94C5C" },
+        { name: "靛蓝", hex: "#2E5C6E" },
+        { name: "驼色", hex: "#A88462" },
+        { name: "鸦青", hex: "#445C5C" },
+        { name: "赤金", hex: "#D77036" },
+        { name: "琥珀", hex: "#B96C3C" },
+        { name: "石绿", hex: "#57A773" },
+        { name: "花青", hex: "#2E4972" }
+      ];
+
+      // ---------- DOM 元素 ----------
+      const grid = document.getElementById('colorGrid');
+      const toastEl = document.getElementById('copyToast');
+      const toastMsg = document.getElementById('toastMessage');
+
+      // 全局toast定时器
+      let toastTimer = null;
+
+      // ---------- 渲染色卡 · 内联背景 + dataset ----------
+      function renderColorCards() {
+        if (!grid) return;
+        grid.innerHTML = ''; // 清空，保证干净渲染
+
+        CHINESE_COLORS.forEach(color => {
+          // 卡片容器 —— 使用dataset存储色名和色值，便于复制
+          const card = document.createElement('div');
+          card.className = 'color-card bg-white/90 backdrop-blur-sm rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-3 md:p-4 flex flex-col cursor-pointer border border-white/40';
+          card.setAttribute('data-color-name', color.name);
+          card.setAttribute('data-hex', color.hex);
+
+          // ---- 色块：内联style背景，保证精准传统色 ----
+          const swatch = document.createElement('div');
+          swatch.className = 'w-full h-24 md:h-28 rounded-xl mb-3 md:mb-4 ring-1 ring-inset ring-white/30 shadow-inner';
+          swatch.style.backgroundColor = color.hex;  // 精确传统色
+
+          // ---- 下方文字区域：色名 + 色值 ----
+          const infoWrapper = document.createElement('div');
+          infoWrapper.className = 'flex justify-between items-center w-full';
+
+          // 颜色中文名
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'color-name text-sm md:text-base font-medium text-gray-700 tracking-wide truncate';
+          nameSpan.textContent = color.name;
+
+          // 色值 HEX (等宽字体，显专业)
+          const hexSpan = document.createElement('span');
+          hexSpan.className = 'font-mono text-xs md:text-xs text-gray-500/90 bg-gray-100/50 px-2 py-0.5 rounded-full border border-gray-200/60';
+          hexSpan.textContent = color.hex;
+
+          infoWrapper.appendChild(nameSpan);
+          infoWrapper.appendChild(hexSpan);
+
+          // 组装卡片
+          card.appendChild(swatch);
+          card.appendChild(infoWrapper);
+          grid.appendChild(card);
+        });
+      }
+
+      // ---------- 优雅提示：toast 展示 ----------
+      function showToast(message) {
+        if (!toastEl || !toastMsg) return;
+        // 清除之前的定时器
+        if (toastTimer) clearTimeout(toastTimer);
+        // 更新消息
+        toastMsg.textContent = message;
+        // 显示toast (淡入 + 上移)
+        toastEl.classList.remove('opacity-0', 'translate-y-2');
+        toastEl.classList.add('opacity-100', 'translate-y-0');
+        // 2.2秒后自动隐藏
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove('opacity-100', 'translate-y-0');
+          toastEl.classList.add('opacity-0', 'translate-y-2');
+        }, 2200);
+      }
+
+      // ---------- 复制色值 · 事件委托（点击卡片）----------
+      function bindCopyEvents() {
+        if (!grid) return;
+        grid.addEventListener('click', async function(e) {
+          // 通过closest获取实际卡片，即使点击内部文字或色块
+          const card = e.target.closest('.color-card');
+          if (!card) return;
+
+          // 从dataset中取出存储的传统色信息
+          const colorName = card.dataset.colorName || '未知';
+          const hexCode = card.dataset.hex || '';
+          
+          if (!hexCode) return;
+
+          try {
+            // 现代剪贴板API
+            await navigator.clipboard.writeText(hexCode);
+            // 显示成功提示（带色名与色值）
+            showToast(`✓ 已复制  ${colorName}  ${hexCode}`);
+          } catch (err) {
+            // 降级方案：传统复制 + alert (极少情况)
+            try {
+              const textArea = document.createElement('textarea');
+              textArea.value = hexCode;
+              document.body.appendChild(textArea);
+              textArea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textArea);
+              showToast(`✓ 已复制  ${colorName}  ${hexCode}`);
+            } catch (e) {
+              alert('无法复制色值，请手动复制：' + hexCode);
+            }
+          }
+        });
+      }
+
+      // ---------- 初始化执行 ----------
+      renderColorCards();
+      bindCopyEvents();
+
+      // 页面加载完成后的额外氛围优化: 给深色色块自动追加细腻的白色文字阴影？ (视觉装饰非必须，略)
+    })();
+  </script>
+
+  <!-- 为保证极端情况兼容性，增加后备字体渲染 -->
+  <noscript>
+    <style>.color-card { cursor: default; }</style>
+    <div class="text-center py-8 text-amber-700">您的浏览器未支持JavaScript，色卡以静态展示。</div>
+  </noscript>
+
+  <!-- 微交互：复制成功时触感反馈（已内置于toast） -->
+  <!-- 传统意境 · 无多余冗余 -->
+</body>
+</html>
