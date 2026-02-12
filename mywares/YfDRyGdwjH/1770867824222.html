@@ -1,0 +1,14 @@
+// 通用加法：支持任意数量数字相加（推荐）
+function add(...numbers) {
+  // 过滤无效值，确保只累加有效数字
+  return numbers
+    .filter(num => !isNaN(Number(num)) && isFinite(Number(num)))
+    .map(Number)
+    .reduce((sum, num) => sum + num, 0);
+}
+
+// 13相关计算示例
+console.log(add(11, 12, 13)); // 输出: 36
+console.log(add(13, 0));      // 输出: 13
+console.log(add(13, -5));     // 输出: 8
+console.log(add(13, 2.5));    // 输出: 15.5
