@@ -1,0 +1,63 @@
+// 复用之前的 IntersectionObserver 逻辑（省略，只聚焦 MutationObserver 扩展）
+function listenForDynamicButtons() {
+  const mutationObserver = new MutationObserver((mutations) => {
+    mutations.forEach(mutation => {
+      // 1. 区分变化类型：只处理子节点增删/属性变化
+      if (mutation.type === 'childList') {
+        // 处理新增节点（你的原有逻辑）
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            if (node.matches('[data-testid="code-block-copy"]')) {
+              observeCopyButtons(); // 观察新增的按钮
+            } else if (node.querySelector('[data-testid="code-block-copy"]')) {
+              observeCopyButtons();
+            }
+          }
+        });
+
+        // 2. 处理被移除的节点：清理观察器，避免内存泄漏
+        mutation.removedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            // 找到被移除的复制按钮，停止观察
+            const removedButtons = node.matches('[data-testid="code-block-copy"]') 
+              ? [node] 
+              : node.querySelectorAll('[data-testid="code-block-copy"]');
+            
+            removedButtons.forEach(button => {
+              if (button._isObserved) {
+                codeBlockCopyObserver.unobserve(button); // 停止观察
+                visibleCopyButtons.delete(button); // 从可见集合移除
+                button._isObserved = false; // 清除标记
+              }
+            });
+          }
+        });
+      }
+
+      // 3. 监听属性变化：比如按钮的 data-testid 被修改
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-testid') {
+        const target = mutation.target;
+        // 如果原本是复制按钮，现在属性被改了 → 停止观察
+        if (!target.matches('[data-testid="code-block-copy"]') && target._isObserved) {
+          codeBlockCopyObserver.unobserve(target);
+          visibleCopyButtons.delete(target);
+        }
+        // 如果原本不是，现在改成了复制按钮 → 开始观察
+        if (target.matches('[data-testid="code-block-copy"]') && !target._isObserved) {
+          observeCopyButtons();
+        }
+      }
+    });
+  });
+
+  // 配置：监听子节点增删 + 属性变化（只监听 data-testid/class） + 后代节点
+  mutationObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-testid', 'class'], // 只监听这两个属性，减少性能消耗
+    attributeOldValue: true // 记录属性变化前的值（可选）
+  });
+
+  return () => mutationObserver.disconnect();
+}
